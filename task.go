@@ -6,22 +6,33 @@ const (
 	INITILAZIED = 0
 	SCHEDULED   = 1
 	RUNNING     = 2
-	FINISHED    = 3
+	SLEEPING    = 3
+	FINISHED    = 4
 )
 
-type Task struct {
-	name   string
-	status int //:= INITIALIZED // 0: initialized, 1: scheduled, 2: running, 3: finished
+type Model struct {
+	name      string
+	cycleTime int // [ms]
+	deadline  int // [ms]
+	state     int //:= INITIALIZED // 0: initialized, 1: scheduled, 2: running, 3: finished
 }
 
-func (t Task) Schedule() {
-	t.status = SCHEDULED
+func NewModel(name string) *Model {
+    model := new(Model)
+
+    model.name = name
+
+    return model
 }
 
-func (t Task) Do() {
-	t.status = RUNNING
+func (m Model) Schedule() {
+	m.state = SCHEDULED
+}
 
-	fmt.Printf("task %s @%p\n", t.name, &t)
+func (m Model) Run() {
+	m.state = RUNNING
 
-	t.status = FINISHED
+	fmt.Printf("model %s @%p\n", m.name, &m)
+
+	m.state = SLEEPING
 }
