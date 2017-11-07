@@ -5,41 +5,51 @@ import "time"
 import "fmt"
 
 func main() {
-    clockRate := time.Duration(3000)
+	terminating := false
+	clockRate := int64(1000000)
 
 	var wg sync.WaitGroup
 
-	models := append([]*Model{}, NewModel("a"), NewModel("b"), NewModel("c"), NewModel("d"))
+	models := append([]*Model{}, NewModel("a", 5000000), NewModel("b", 7000000), NewModel("c", 12000000), NewModel("d", 9000000))
 
-    var next *Model
+	//var next *Model
 
-	for _, model := range models {
-		wg.Add(1)
+	for !terminating {
+		fmt.Printf("scheduling @%d...\n", microseconds())
 
-        next = earliestDeadline(models)
+		time.Sleep(time.Duration(clockRate) * time.Microsecond)
 
-		next.Schedule()
+		for _, model := range models {
+			wg.Add(1)
 
-		go func(model *Model) {
-			defer wg.Done()
+			now := microseconds()
 
-			model.Run()
-		}(model)
+			if model.lastCycle+model.cycleTime < now+clockRate {
 
-        fmt.Println("scheduling...")
+				model.lastCycle = now
 
-        time.Sleep(clockRate * time.Millisecond)
+				go func(model *Model) {
+					defer wg.Done()
+
+					model.Run()
+				}(model)
+			}
+		}
 	}
 
 	wg.Wait()
 }
 
+func microseconds() int64 {
+	return time.Now().UnixNano() / int64(time.Microsecond)
+}
+
 func earliestDeadline(models []*Model) *Model {
-    earliest := models[0]
+	earliest := models[0]
 
-    for _, model := range models {
-        earliest = model
-    }
+	for _, model := range models {
+		earliest = model
+	}
 
-    return earliest
+	return earliest
 }

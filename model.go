@@ -12,17 +12,19 @@ const (
 
 type Model struct {
 	name      string
-	cycleTime int // [ms]
-	deadline  int // [ms]
-	state     int //:= INITIALIZED // 0: initialized, 1: scheduled, 2: running, 3: finished
+	lastCycle int64 // [ms]
+	cycleTime int64 // [ms]
+	deadline  int   // [ms]
+	state     int   //:= INITIALIZED // 0: initialized, 1: scheduled, 2: running, 3: finished
 }
 
-func NewModel(name string) *Model {
-    model := new(Model)
+func NewModel(name string, cycleTime int64) *Model {
+	model := new(Model)
 
-    model.name = name
+	model.name = name
+	model.cycleTime = cycleTime
 
-    return model
+	return model
 }
 
 func (m Model) Schedule() {
