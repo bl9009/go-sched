@@ -12,6 +12,12 @@ func main() {
 	drift := make(chan int64)
 	drifts := ring.New(10)
 
+    for i := 0; i < drifts.Len(); i++ {
+		drifts.Value = int64(0)
+
+		drifts = drifts.Next()
+	}
+
 	go func() {
 		for !terminating {
 			drifts.Value = <-drift
@@ -34,14 +40,10 @@ func main() {
 
 			now := microseconds()
 
-			nextCycle := model.lastCycle + model.cycleTime
+			nextCycle := model.lastCycle + model.cycleTime - int64(avgDrift(drifts))
 			nextTick := now + clockRate
 
 			if nextCycle < nextTick {
-
-				//avg := avgDrift(drifts)
-				avg := 0.1
-				fmt.Printf("avg drift: %f\n", avg)
 
 				go func(model *Model, drift chan int64) {
 					time.Sleep(time.Duration(nextCycle - microseconds()))
@@ -72,15 +74,15 @@ func microseconds() int64 {
 }
 
 func avgDrift(drifts *ring.Ring) float64 {
-	var acc int
+	var acc int64
 
 	for i := 0; i < drifts.Len(); i++ {
-		acc += drifts.Value.(int)
+		acc += drifts.Value.(int64)
 
 		drifts = drifts.Next()
 	}
 
-	return float64(acc / drifts.Len())
+	return float64(acc) / float64(drifts.Len())
 }
 
 func earliestDeadline(models []*Model) *Model {
