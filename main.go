@@ -3,31 +3,26 @@ package main
 import "sync"
 import "time"
 import "fmt"
+import "container/ring"
 
 func main() {
 	terminating := false
 	clockRate := int64(1000000)
 
-    drift := make(chan int64)
-    var accDrift int64
-    var drifts int
+	drift := make(chan int64)
+	drifts := ring.New(10)
+
+	go func() {
+		for !terminating {
+			drifts.Value = <-drift
+
+			drifts = drifts.Next()
+		}
+	}()
 
 	var wg sync.WaitGroup
 
 	models := append([]*Model{}, NewModel("a", 5000000), NewModel("b", 7000000), NewModel("c", 12000000), NewModel("d", 9000000))
-
-	//var next *Model
-
-    go func() {
-        for {
-            fmt.Println("waiting for drift...")
-            lastDrift := <- drift
-            fmt.Printf("received drift %d", lastDrift)
-            accDrift += <- drift
-            drifts += 1
-            fmt.Printf("avg drift: %f\n", float32(accDrift) / float32(drifts))
-        }
-    }()
 
 	for !terminating {
 		//fmt.Printf("scheduling @%d...\n", microseconds())
@@ -39,23 +34,27 @@ func main() {
 
 			now := microseconds()
 
-            nextCycle := model.lastCycle + model.cycleTime
-            nextTick := now + clockRate
+			nextCycle := model.lastCycle + model.cycleTime
+			nextTick := now + clockRate
 
-			if  nextCycle < nextTick {
+			if nextCycle < nextTick {
+
+				//avg := avgDrift(drifts)
+				avg := 0.1
+				fmt.Printf("avg drift: %f\n", avg)
 
 				go func(model *Model, drift chan int64) {
-                    time.Sleep(time.Duration(nextCycle - microseconds()))
+					time.Sleep(time.Duration(nextCycle - microseconds()))
 
-                    localDrift := nextCycle - microseconds()
+					localDrift := microseconds() - nextCycle
 
-                    if model.lastCycle != 0 {
-                        drift <- localDrift
-                    }
+					if model.lastCycle != 0 {
+						drift <- localDrift
+					}
 
-                    model.lastCycle = microseconds()
+					model.lastCycle = microseconds()
 
-                    //fmt.Printf("planned: %d, scheduled: %d, drift: %d\n", nextCycle, microseconds(), drift)
+					fmt.Printf("planned: %d, scheduled: %d, drift: %d\n", nextCycle, microseconds(), localDrift)
 
 					defer wg.Done()
 
@@ -70,6 +69,18 @@ func main() {
 
 func microseconds() int64 {
 	return time.Now().UnixNano() / int64(time.Microsecond)
+}
+
+func avgDrift(drifts *ring.Ring) float64 {
+	var acc int
+
+	for i := 0; i < drifts.Len(); i++ {
+		acc += drifts.Value.(int)
+
+		drifts = drifts.Next()
+	}
+
+	return float64(acc / drifts.Len())
 }
 
 func earliestDeadline(models []*Model) *Model {

@@ -1,6 +1,7 @@
 package main
 
 import "fmt"
+import "time"
 
 const (
 	INITILAZIED = 0
@@ -35,6 +36,8 @@ func (m Model) Run() {
 	m.state = RUNNING
 
 	fmt.Printf("model %s @%p\n", m.name, &m)
+
+	time.Sleep(10000 * time.Millisecond)
 
 	m.state = SLEEPING
 }
