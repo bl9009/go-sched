@@ -35,6 +35,8 @@ func (m Model) Schedule() {
 func (m Model) Run() {
 	m.state = RUNNING
 
+    m.lastCycle = nowMicroseconds()
+
 	fmt.Printf("model %s @%p\n", m.name, &m)
 
 	time.Sleep(10000 * time.Millisecond)
