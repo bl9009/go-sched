@@ -1,10 +1,12 @@
-package main
+package scheduler
 
-import "fmt"
-import "time"
+import (
+    "fmt"
+    "time"
+)
 
 const (
-	INITILAZIED = 0
+	INITIALIZED = 0
 	SCHEDULED   = 1
 	RUNNING     = 2
 	SLEEPING    = 3
