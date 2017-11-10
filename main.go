@@ -1,7 +1,6 @@
 package main
 
-import (
-)
+import ()
 
 func main() {
 
@@ -15,7 +14,7 @@ func main() {
 
 	models := append([]*Model{}, NewModel("a", 5000000), NewModel("b", 7000000), NewModel("c", 12000000), NewModel("d", 9000000))
 
-    scheduler := NewScheduler(models, 1000000)
+	scheduler := NewScheduler(models, 1000000)
 
-    scheduler.ScheduleAsync()
+	scheduler.ScheduleAsync()
 }

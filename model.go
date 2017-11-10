@@ -16,7 +16,7 @@ type Model struct {
 	lastCycle int64 // [ms]
 	cycleTime int64 // [ms]
 	deadline  int   // [ms]
-	state     int   //:= INITIALIZED // 0: initialized, 1: scheduled, 2: running, 3: finished
+	state     int
 }
 
 func NewModel(name string, cycleTime int64) *Model {
@@ -24,6 +24,8 @@ func NewModel(name string, cycleTime int64) *Model {
 
 	model.name = name
 	model.cycleTime = cycleTime
+
+    model.state = INITIALIZED
 
 	return model
 }
@@ -35,7 +37,7 @@ func (m Model) Schedule() {
 func (m Model) Run() {
 	m.state = RUNNING
 
-    m.lastCycle = nowMicroseconds()
+	m.lastCycle = nowMicroseconds()
 
 	fmt.Printf("model %s @%p\n", m.name, &m)
 
