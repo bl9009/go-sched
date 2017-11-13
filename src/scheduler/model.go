@@ -1,8 +1,8 @@
 package scheduler
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 )
 
 const (
@@ -27,7 +27,7 @@ func NewModel(name string, cycleTime int64) *Model {
 	model.name = name
 	model.cycleTime = cycleTime
 
-    model.state = INITIALIZED
+	model.state = INITIALIZED
 
 	return model
 }
