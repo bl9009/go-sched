@@ -6,7 +6,7 @@ import (
 )
 
 type Scheduler struct {
-	clockRate int64
+	clockRate int64    // [microseconds]
 	models    []*Model
 
 	cycleDrift chan int64
@@ -25,6 +25,8 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 	scheduler.cycleDrift = make(chan int64)
 
 	scheduler.dispatcher = NewDispatcher(scheduler.cycleDrift)
+
+    scheduler.drifts = ring.New(10)
 
 	for i := 0; i < scheduler.drifts.Len(); i++ {
 		scheduler.drifts.Value = int64(0)
