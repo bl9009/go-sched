@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"math"
 	"testing"
 	"time"
 )
@@ -42,11 +43,11 @@ func TestNewScheduler(t *testing.T) {
 }
 
 func TestScheduleAsync(t *testing.T) {
-
+	// NO TEST REQUIRED: Proxy method only
 }
 
 func TestScheduleSync(t *testing.T) {
-
+	// NO TEST REQUIRED: Proxy method only
 }
 
 func TestSchedule(t *testing.T) {
@@ -55,7 +56,7 @@ func TestSchedule(t *testing.T) {
 	startChan := make(chan bool)
 
 	if scheduler.running {
-		t.Errorf("scheduler running flag is true although scheduler has not been started yet")
+		t.Errorf("scheduler.running flag is true although scheduler has not been started yet")
 	}
 
 	go scheduler.schedule(false, startChan, exitChan)
@@ -63,7 +64,13 @@ func TestSchedule(t *testing.T) {
 	<-startChan
 
 	if !scheduler.running {
-		t.Errorf("scheduler running flag is false although scheduler was started")
+		t.Errorf("scheduler.running flag is false although scheduler was started")
+	}
+
+	err := scheduler.schedule(false, make(chan bool, 1), make(chan bool, 1))
+
+	if err == nil {
+		t.Errorf("Scheduler started altough it is already running")
 	}
 
 	scheduler.Terminate()
@@ -71,20 +78,28 @@ func TestSchedule(t *testing.T) {
 	<-exitChan
 
 	if scheduler.running {
-		t.Errorf("scheduler running flag is true although scheduler has been stopped")
+		t.Errorf("scheduler.running flag is true although scheduler has been stopped")
 	}
 }
 
 func TestTick(t *testing.T) {
-
+	// NO TEST REQUIRED: Structural function without actual logic
 }
 
 func TestDispatch(t *testing.T) {
-
+	// NO TEST REQUIRED: Test not required: Is tested in dispatcher tests
 }
 
 func TestNextTick(t *testing.T) {
+	testClockRate := int64(50000)
+	scheduler := NewScheduler([]*Model{}, testClockRate)
+	testTolerance := 1000
 
+	testNextTick := nowMicroseconds() + testClockRate
+
+	if math.Abs(float64(testNextTick-scheduler.nextTick())) > float64(testTolerance) {
+		t.Errorf("nextTick drifting")
+	}
 }
 
 func TestNextModelCycle(t *testing.T) {

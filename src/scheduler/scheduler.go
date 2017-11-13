@@ -2,8 +2,8 @@ package scheduler
 
 import (
 	"container/ring"
+	"errors"
 	"time"
-    "errors"
 )
 
 type Scheduler struct {
@@ -43,11 +43,11 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 }
 
 func (scheduler *Scheduler) ScheduleAsync() {
-	go scheduler.schedule(true, make(chan bool), make(chan bool))
+	go scheduler.schedule(true, make(chan bool, 1), make(chan bool, 1))
 }
 
 func (scheduler *Scheduler) ScheduleSync() {
-	scheduler.schedule(false, make(chan bool), make(chan bool))
+	scheduler.schedule(false, make(chan bool, 1), make(chan bool, 1))
 }
 
 func (scheduler *Scheduler) Terminate() {
@@ -75,7 +75,7 @@ func (scheduler *Scheduler) schedule(async bool, start chan bool, exit chan bool
 
 	exit <- true
 
-    return nil
+	return nil
 }
 
 func (scheduler *Scheduler) tick(async bool) {
