@@ -3,10 +3,11 @@ package scheduler
 import (
 	"container/ring"
 	"time"
+    "errors"
 )
 
 type Scheduler struct {
-	clockRate int64    // [microseconds]
+	clockRate int64 // [microseconds]
 	models    []*Model
 
 	cycleDrift chan int64
@@ -14,6 +15,7 @@ type Scheduler struct {
 	dispatcher  *Dispatcher
 	drifts      *ring.Ring
 	terminating bool
+	running     bool
 }
 
 func NewScheduler(models []*Model, clockRate int64) *Scheduler {
@@ -26,7 +28,7 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 
 	scheduler.dispatcher = NewDispatcher(scheduler.cycleDrift)
 
-    scheduler.drifts = ring.New(10)
+	scheduler.drifts = ring.New(10)
 
 	for i := 0; i < scheduler.drifts.Len(); i++ {
 		scheduler.drifts.Value = int64(0)
@@ -35,24 +37,45 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 	}
 
 	scheduler.terminating = false
+	scheduler.running = false
 
 	return scheduler
 }
 
 func (scheduler *Scheduler) ScheduleAsync() {
-	go scheduler.schedule(true)
+	go scheduler.schedule(true, make(chan bool), make(chan bool))
 }
 
 func (scheduler *Scheduler) ScheduleSync() {
-	scheduler.schedule(false)
+	scheduler.schedule(false, make(chan bool), make(chan bool))
 }
 
-func (scheduler *Scheduler) schedule(async bool) {
+func (scheduler *Scheduler) Terminate() {
+	scheduler.terminating = true
+}
+
+func (scheduler *Scheduler) schedule(async bool, start chan bool, exit chan bool) error {
+	if !scheduler.running {
+		scheduler.running = true
+
+		start <- true
+	} else {
+		exit <- true
+
+		return errors.New("Scheduler is already running!")
+	}
+
 	for !scheduler.terminating {
 		scheduler.waitUntilTick()
 
 		scheduler.tick(async)
 	}
+
+	scheduler.running = false
+
+	exit <- true
+
+    return nil
 }
 
 func (scheduler *Scheduler) tick(async bool) {
