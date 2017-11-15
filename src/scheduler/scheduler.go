@@ -103,7 +103,7 @@ func (scheduler *Scheduler) nextTick() int64 {
 }
 
 func (scheduler *Scheduler) nextModelCycle(model *Model) int64 {
-	return model.lastCycle + model.cycleTime - int64(avgDrift(scheduler.drifts))
+	return model.lastCycle + model.cycleTime - int64(scheduler.avgDrift())
 }
 
 func (scheduler *Scheduler) waitUntilTick() {
@@ -114,7 +114,9 @@ func nowMicroseconds() int64 {
 	return time.Now().UnixNano() / int64(time.Microsecond)
 }
 
-func avgDrift(drifts *ring.Ring) int64 {
+func (scheduler *Scheduler) avgDrift() int64 {
+	drifts := scheduler.drifts
+
 	var acc int64
 
 	for i := 0; i < drifts.Len(); i++ {

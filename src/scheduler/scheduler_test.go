@@ -107,7 +107,21 @@ func TestNextModelCycle(t *testing.T) {
 }
 
 func TestWaitUntilTick(t *testing.T) {
+	testClockRate := int64(50000)
+	scheduler := NewScheduler([]*Model{}, testClockRate)
+	testTolerance := int64(1000)
 
+	testWait := scheduler.clockRate
+
+	start := nowMicroseconds()
+
+	scheduler.waitUntilTick()
+
+	result := nowMicroseconds() - start
+
+	if result < testWait-testTolerance || result > testWait+testTolerance {
+		t.Errorf("waitUntilClock drifting: %f", math.Abs(float64(result-testWait)))
+	}
 }
 
 func TestNowMicroseconds(t *testing.T) {
