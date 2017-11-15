@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 	"time"
+    "container/ring"
 )
 
 func TestNewScheduler(t *testing.T) {
@@ -134,5 +135,21 @@ func TestNowMicroseconds(t *testing.T) {
 }
 
 func TestAvgDrift(t *testing.T) {
+    scheduler := NewScheduler([]*Model{}, 50000)
 
+    drifts := ring.New(10)
+
+    for i := 0; i < drifts.Len(); i++ {
+        drifts.Value = int64(10)
+
+        drifts = drifts.Next()
+    }
+
+    scheduler.drifts = drifts
+
+    result := scheduler.avgDrift()
+
+    if result != 10 {
+        t.Errorf("average drift computation is wrong")
+    }
 }
