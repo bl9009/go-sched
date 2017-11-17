@@ -5,13 +5,13 @@ import (
 )
 
 type Dispatcher struct {
-	cycleDrift chan int64
+	dispatchDrift chan int64
 }
 
-func NewDispatcher(cycleDrift chan int64) *Dispatcher {
+func NewDispatcher(dispatchDrift chan int64) *Dispatcher {
 	dispatcher := new(Dispatcher)
 
-	dispatcher.cycleDrift = cycleDrift
+	dispatcher.dispatchDrift = dispatchDrift
 
 	return dispatcher
 }

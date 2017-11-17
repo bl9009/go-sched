@@ -10,7 +10,7 @@ type Scheduler struct {
 	clockRate int64 // [microseconds]
 	models    []*Model
 
-	cycleDrift chan int64
+	dispatchDrift chan int64
 
 	dispatcher  *Dispatcher
 	drifts      *ring.Ring
@@ -26,7 +26,7 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 
 	scheduler.cycleDrift = make(chan int64)
 
-	scheduler.dispatcher = NewDispatcher(scheduler.cycleDrift)
+	scheduler.dispatcher = NewDispatcher(scheduler.dispatchDrift)
 
 	scheduler.drifts = ring.New(10)
 
