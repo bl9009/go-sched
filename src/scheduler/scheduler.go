@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"container/ring"
 	"errors"
 	"time"
 )
@@ -10,10 +9,7 @@ type Scheduler struct {
 	clockRate int64 // [microseconds]
 	models    []*Model
 
-	dispatchDrift chan int64
-
 	dispatcher  *Dispatcher
-	drifts      *ring.Ring
 	terminating bool
 	running     bool
 }
@@ -24,17 +20,7 @@ func NewScheduler(models []*Model, clockRate int64) *Scheduler {
 	scheduler.clockRate = clockRate
 	scheduler.models = models
 
-	scheduler.cycleDrift = make(chan int64)
-
-	scheduler.dispatcher = NewDispatcher(scheduler.dispatchDrift)
-
-	scheduler.drifts = ring.New(10)
-
-	for i := 0; i < scheduler.drifts.Len(); i++ {
-		scheduler.drifts.Value = int64(0)
-
-		scheduler.drifts = scheduler.drifts.Next()
-	}
+	scheduler.dispatcher = NewDispatcher()
 
 	scheduler.terminating = false
 	scheduler.running = false
@@ -103,7 +89,7 @@ func (scheduler *Scheduler) nextTick() int64 {
 }
 
 func (scheduler *Scheduler) nextModelCycle(model *Model) int64 {
-	return model.lastCycle + model.cycleTime - int64(scheduler.avgDrift())
+	return model.lastCycle + model.cycleTime - scheduler.dispatcher.AvgDrift()
 }
 
 func (scheduler *Scheduler) waitUntilTick() {
@@ -112,18 +98,4 @@ func (scheduler *Scheduler) waitUntilTick() {
 
 func nowMicroseconds() int64 {
 	return time.Now().UnixNano() / int64(time.Microsecond)
-}
-
-func (scheduler *Scheduler) avgDrift() int64 {
-	drifts := scheduler.drifts
-
-	var acc int64
-
-	for i := 0; i < drifts.Len(); i++ {
-		acc += drifts.Value.(int64)
-
-		drifts = drifts.Next()
-	}
-
-	return acc / int64(drifts.Len())
 }
