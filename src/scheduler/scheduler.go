@@ -7,18 +7,18 @@ import (
 
 type Scheduler struct {
 	clockRate int64 // [microseconds]
-	models    []*Model
+	tasks     []*Task
 
 	dispatcher  *Dispatcher
 	terminating bool
 	running     bool
 }
 
-func NewScheduler(models []*Model, clockRate int64) *Scheduler {
+func NewScheduler(tasks []*Task, clockRate int64) *Scheduler {
 	scheduler := new(Scheduler)
 
 	scheduler.clockRate = clockRate
-	scheduler.models = models
+	scheduler.tasks = tasks
 
 	scheduler.dispatcher = NewDispatcher()
 
@@ -65,21 +65,21 @@ func (scheduler *Scheduler) schedule(async bool, start chan bool, exit chan bool
 }
 
 func (scheduler *Scheduler) tick(async bool) {
-	for _, model := range scheduler.models {
+	for _, task := range scheduler.tasks {
 
-		scheduler.dispatch(model, async)
+		scheduler.dispatch(task, async)
 	}
 }
 
-func (scheduler *Scheduler) dispatch(model *Model, async bool) {
+func (scheduler *Scheduler) dispatch(task *Task, async bool) {
 	nextTick := scheduler.nextTick()
-	nextModelCycle := scheduler.nextModelCycle(model)
+	nextCycle := scheduler.nextCycle(task)
 
-	if nextModelCycle < nextTick {
+	if nextCycle < nextTick {
 		if async {
-			scheduler.dispatcher.DispatchAsync(model, nextModelCycle)
+			scheduler.dispatcher.DispatchAsync(task, nextCycle)
 		} else {
-			scheduler.dispatcher.DispatchSync(model, nextModelCycle)
+			scheduler.dispatcher.DispatchSync(task, nextCycle)
 		}
 	}
 }
@@ -88,8 +88,8 @@ func (scheduler *Scheduler) nextTick() int64 {
 	return nowMicroseconds() + scheduler.clockRate
 }
 
-func (scheduler *Scheduler) nextModelCycle(model *Model) int64 {
-	return model.lastCycle + model.cycleTime - scheduler.dispatcher.AvgDrift()
+func (scheduler *Scheduler) nextCycle(task *Task) int64 {
+	return task.lastCycle + task.cycleTime - scheduler.dispatcher.AvgDrift()
 }
 
 func (scheduler *Scheduler) waitUntilTick() {

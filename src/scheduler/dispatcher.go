@@ -27,12 +27,12 @@ func NewDispatcher() *Dispatcher {
 	return dispatcher
 }
 
-func (dispatcher *Dispatcher) DispatchAsync(model *Model, nextModelCycle int64) {
-	go dispatcher.dispatch(model, nextModelCycle)
+func (dispatcher *Dispatcher) DispatchAsync(task *Task, nextModelCycle int64) {
+	go dispatcher.dispatch(task, nextModelCycle)
 }
 
-func (dispatcher *Dispatcher) DispatchSync(model *Model, nextModelCycle int64) {
-	dispatcher.dispatch(model, nextModelCycle)
+func (dispatcher *Dispatcher) DispatchSync(task *Task, nextCycle int64) {
+	dispatcher.dispatch(task, nextCycle)
 }
 
 func (dispatcher *Dispatcher) AvgDrift() int64 {
@@ -50,20 +50,20 @@ func (dispatcher *Dispatcher) AvgDrift() int64 {
 	return acc / int64(dispatcher.drifts.Len())
 }
 
-func (dispatcher *Dispatcher) dispatch(model *Model, nextModelCycle int64) {
-	waitUntilCycle(nextModelCycle)
+func (dispatcher *Dispatcher) dispatch(task *Task, nextCycle int64) {
+	waitUntilCycle(nextCycle)
 
-	drift := nowMicroseconds() - nextModelCycle
+	drift := nowMicroseconds() - nextCycle
 
-	model.Run()
+	task.Run()
 
-	if model.lastCycle != 0 {
+	if task.lastCycle != 0 {
 		dispatcher.addDrift(drift)
 	}
 }
 
-func waitUntilCycle(nextModelCycle int64) {
-	time.Sleep(time.Duration(nextModelCycle - nowMicroseconds()))
+func waitUntilCycle(nextCycle int64) {
+	time.Sleep(time.Duration(nextCycle - nowMicroseconds()))
 }
 
 func (dispatcher *Dispatcher) addDrift(drift int64) {
